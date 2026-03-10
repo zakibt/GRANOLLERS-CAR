@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Admin Panel - GRANOLLERS CAR</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --gold:#c9a84c;
+  --gold-dark:#8a6d2f;
+  --gold-light:#ffd23e;
+  --champagne:#e8d9b0;
+  --gold-glow:rgba(201,168,76,0.35);
+  --bg:#f7f4ef;
+  --bg-card:#ffffff;
+  --text:#0a0a0a;
+  --text-muted:#555;
+  --border:rgba(201,168,76,0.3);
+  --border-strong:rgba(201,168,76,0.7);
+  --navbar-bg:rgba(255,255,255,0.98);
+  --input-bg:#faf8f4;
+  --success:#2e7d32;
+  --success-bg:rgba(46,125,50,0.1);
+  --danger:#c62828;
+  --danger-bg:rgba(198,40,40,0.08);
+  --warning:#b8860b;
+  --warning-bg:rgba(184,134,11,0.1);
+  --info-bg:rgba(201,168,76,0.08);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--text);font-family:"Rajdhani",sans-serif;font-weight:400;min-height:100vh;}
+
+/* ── BACKGROUND TEXTURE ── */
+body::before{
+  content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:
+    radial-gradient(circle at 20% 20%, rgba(201,168,76,0.04) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(201,168,76,0.04) 0%, transparent 50%),
+    linear-gradient(135deg, rgba(201,168,76,0.02) 25%, transparent 25%) 0 0,
+    linear-gradient(225deg, rgba(201,168,76,0.02) 25%, transparent 25%) 0 0;
+  background-size:100% 100%, 100% 100%, 60px 60px, 60px 60px;
+}
+
+/* ── LOADING ── */
+.ld-ov{position:fixed;inset:0;z-index:99998;background:var(--bg);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:20px;}
+.ld-ov.hidden{display:none;}
+.spinner{width:50px;height:50px;border:3px solid rgba(201,168,76,0.2);border-top:3px solid var(--gold);border-radius:50%;animation:spin 0.9s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.ld-txt{font-family:"Orbitron",sans-serif;font-size:12px;letter-spacing:3px;color:var(--gold);text-transform:uppercase;}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(100px);padding:14px 32px;font-family:"Orbitron",sans-serif;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;z-index:99999;transition:transform 0.4s ease;pointer-events:none;white-space:nowrap;border-radius:6px;}
+.toast.show{transform:translateX(-50%) translateY(0);}
+.toast.success{background:var(--success-bg);border:1.5px solid var(--success);color:var(--success);}
+.toast.error{background:var(--danger-bg);border:1.5px solid var(--danger);color:var(--danger);}
+.toast.info{background:var(--info-bg);border:1.5px solid var(--gold);color:var(--gold-dark);}
+
+/* ── LOGIN ── */
+#loginScreen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;position:relative;z-index:1;}
+.login-box{
+  background:var(--bg-card);border:2px solid var(--border-strong);
+  padding:55px 50px;max-width:460px;width:100%;
+  box-shadow:0 30px 80px rgba(0,0,0,0.1), 0 0 0 1px var(--border);
+  border-radius:4px;
+  position:relative;
+}
+.login-box::before{
+  content:"";position:absolute;top:0;left:0;right:0;height:4px;
+  background:linear-gradient(90deg,#000,var(--gold),var(--gold-light),var(--gold),#000);
+  border-radius:4px 4px 0 0;
+}
+.login-logo{
+  font-family:"Orbitron",sans-serif;font-size:28px;font-weight:900;
+  text-align:center;margin-bottom:6px;letter-spacing:3px;
+}
+.login-logo .ll-black{color:var(--text);}
+.login-logo .ll-gold{
+  background:linear-gradient(135deg,var(--champagne),var(--gold),var(--gold-dark),var(--gold-light));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.login-sub{text-align:center;font-size:10px;color:var(--text-muted);letter-spacing:4px;text-transform:uppercase;margin-bottom:40px;}
+.login-form{display:flex;flex-direction:column;gap:20px;}
+.err-msg{
+  background:var(--danger-bg);border:1.5px solid var(--danger);color:var(--danger);
+  padding:12px 16px;font-size:13px;text-align:center;border-radius:4px;
+  display:none;letter-spacing:0.5px;
+}
+.err-msg.show{display:block;}
+
+/* ── FORM ELEMENTS ── */
+.fg{display:flex;flex-direction:column;gap:8px;}
+.fg label{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--gold-dark);}
+.fg input,.fg select{
+  background:var(--input-bg);border:1.5px solid var(--border);color:var(--text);
+  padding:13px 16px;font-family:"Rajdhani",sans-serif;font-size:15px;
+  transition:all 0.3s;outline:none;width:100%;border-radius:4px;
+}
+.fg input:focus,.fg select:focus{border-color:var(--gold);background:#fff;box-shadow:0 0 0 3px rgba(201,168,76,0.12);}
+.fg select option{background:var(--bg-card);}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+
+/* ── BUTTONS ── */
+.btn-p{
+  background:linear-gradient(135deg,var(--text),#333);
+  border:none;color:#fff;padding:16px;
+  font-family:"Orbitron",sans-serif;font-size:12px;font-weight:700;
+  letter-spacing:2px;text-transform:uppercase;cursor:pointer;
+  transition:all 0.3s;border-radius:4px;
+  box-shadow:3px 3px 0 var(--gold);
+}
+.btn-p:hover{transform:translate(-2px,-2px);box-shadow:5px 5px 0 var(--gold);}
+.btn-p:disabled{opacity:0.4;cursor:not-allowed;transform:none;box-shadow:3px 3px 0 var(--gold);}
+
+.btn-s{
+  background:transparent;border:2px solid var(--gold);color:var(--gold-dark);
+  padding:10px 20px;font-family:"Orbitron",sans-serif;font-size:10px;font-weight:700;
+  letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;
+  transition:all 0.3s;border-radius:4px;
+}
+.btn-s:hover{background:var(--gold);color:#fff;box-shadow:0 5px 20px var(--gold-glow);}
+
+.btn-g{
+  background:transparent;border:2px solid var(--success);color:var(--success);
+  padding:10px 20px;font-family:"Orbitron",sans-serif;font-size:10px;font-weight:700;
+  letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;
+  transition:all 0.3s;border-radius:4px;
+}
+.btn-g:hover{background:var(--success);color:#fff;box-shadow:0 5px 20px rgba(46,125,50,0.3);}
+
+.btn-d{
+  background:transparent;border:2px solid var(--danger);color:var(--danger);
+  padding:10px 20px;font-family:"Orbitron",sans-serif;font-size:10px;font-weight:700;
+  letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;
+  transition:all 0.3s;border-radius:4px;
+}
+.btn-d:hover{background:var(--danger);color:#fff;box-shadow:0 5px 20px rgba(198,40,40,0.25);}
+
+/* ── DASHBOARD ── */
+#dashboard{display:none;min-height:100vh;position:relative;z-index:1;}
+#dashboard.active{display:block;}
+
+/* ── ADMIN HEADER ── */
+.admin-header{
+  background:var(--navbar-bg);backdrop-filter:blur(20px);
+  border-bottom:2px solid var(--gold);
+  padding:18px 50px;
+  display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;z-index:100;
+  box-shadow:0 5px 30px rgba(201,168,76,0.12);
+}
+.admin-logo{font-family:"Orbitron",sans-serif;font-size:22px;font-weight:900;letter-spacing:2px;}
+.admin-logo .al-black{color:var(--text);}
+.admin-logo .al-gold{
+  background:linear-gradient(135deg,var(--champagne),var(--gold),var(--gold-dark),var(--gold-light));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.admin-logo small{font-size:9px;color:var(--text-muted);letter-spacing:3px;margin-left:10px;-webkit-text-fill-color:var(--text-muted);background:none;}
+.hdr-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+
+/* ── SYNC PILL ── */
+.sync-pill{
+  font-size:11px;letter-spacing:1px;padding:8px 14px;
+  border:1.5px solid var(--border);color:var(--text-muted);
+  display:flex;align-items:center;gap:8px;border-radius:20px;
+  background:var(--bg-card);
+}
+.sdot{width:8px;height:8px;border-radius:50%;background:var(--text-muted);flex-shrink:0;transition:all 0.3s;}
+.sdot.synced{background:var(--success);box-shadow:0 0 8px rgba(46,125,50,0.6);}
+.sdot.syncing{background:var(--gold);animation:pulse 1s ease-in-out infinite;}
+.sdot.error{background:var(--danger);box-shadow:0 0 8px rgba(198,40,40,0.6);}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.4;}}
+
+/* ── CONTENT ── */
+.admin-content{padding:45px 50px;max-width:1600px;margin:0 auto;}
+.page-ttl{
+  font-family:"Orbitron",sans-serif;font-size:28px;font-weight:900;
+  letter-spacing:3px;margin-bottom:6px;
+}
+.page-ttl .pt-black{color:var(--text);}
+.page-ttl .pt-gold{
+  background:linear-gradient(135deg,var(--gold),var(--gold-dark));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.page-sub{color:var(--text-muted);font-size:13px;margin-bottom:35px;letter-spacing:0.3px;}
+
+/* ── NOTICE ── */
+.notice{
+  background:var(--warning-bg);border:1.5px solid rgba(184,134,11,0.4);
+  padding:20px 24px;margin-bottom:28px;display:none;border-radius:4px;
+}
+.notice.show{display:block;}
+.notice strong{font-family:"Orbitron",sans-serif;color:var(--warning);display:block;font-size:11px;letter-spacing:1px;margin-bottom:10px;}
+.notice ol{margin:0 0 0 18px;color:var(--text-muted);font-size:13px;line-height:2.2;}
+.notice ol b{color:var(--text);}
+.notice ol code{color:var(--gold-dark);font-family:monospace;background:rgba(201,168,76,0.1);padding:2px 7px;border-radius:3px;}
+
+/* ── STATS ── */
+.stats-row{display:flex;gap:20px;margin-bottom:35px;flex-wrap:wrap;}
+.stat-c{
+  background:var(--bg-card);border:1.5px solid var(--border);
+  padding:22px 28px;flex:1;min-width:130px;border-radius:4px;
+  position:relative;overflow:hidden;
+  box-shadow:0 4px 20px rgba(0,0,0,0.04);
+  transition:all 0.3s;
+}
+.stat-c:hover{border-color:var(--gold);box-shadow:0 8px 30px rgba(201,168,76,0.15);transform:translateY(-2px);}
+.stat-c::before{
+  content:"";position:absolute;top:0;left:0;width:100%;height:3px;
+  background:linear-gradient(90deg,var(--text),var(--gold));
+}
+.stat-n{
+  font-family:"Orbitron",sans-serif;font-size:36px;font-weight:900;line-height:1;
+  background:linear-gradient(135deg,var(--text),var(--gold-dark));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.stat-l{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--text-muted);margin-top:8px;}
+
+/* ── TABLE ── */
+.tbl-wrap{
+  background:var(--bg-card);border:1.5px solid var(--border);
+  border-radius:4px;overflow-x:auto;
+  box-shadow:0 4px 30px rgba(0,0,0,0.05);
+}
+.tbl-wrap::before{
+  content:"";display:block;height:3px;
+  background:linear-gradient(90deg,#000,var(--gold),#000);
+}
+table{width:100%;border-collapse:collapse;min-width:860px;}
+thead{background:rgba(201,168,76,0.05);}
+th{
+  padding:14px 16px;text-align:left;
+  font-family:"Orbitron",sans-serif;font-size:9px;font-weight:700;
+  letter-spacing:2px;text-transform:uppercase;color:var(--gold-dark);
+  border-bottom:1.5px solid var(--border);white-space:nowrap;
+}
+td{padding:14px 16px;border-bottom:1px solid rgba(201,168,76,0.1);font-size:14px;vertical-align:middle;}
+tbody tr{transition:background 0.2s;}
+tbody tr:hover{background:rgba(201,168,76,0.04);}
+tbody tr:last-child td{border-bottom:none;}
+
+.cthumb{width:72px;height:48px;object-fit:cover;border:1.5px solid var(--border);display:block;border-radius:3px;}
+.cthumb-ph{width:72px;height:48px;background:var(--bg);border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:22px;opacity:0.4;border-radius:3px;}
+.cn strong{display:block;font-size:15px;font-weight:700;}
+.cn small{color:var(--text-muted);font-size:12px;}
+
+/* BADGES */
+.badge{
+  display:inline-block;padding:4px 12px;font-size:9px;font-weight:700;
+  letter-spacing:1.5px;text-transform:uppercase;border-radius:3px;
+}
+.b-avail{background:var(--success-bg);border:1.5px solid var(--success);color:var(--success);}
+.b-unavail{background:var(--danger-bg);border:1.5px solid var(--danger);color:var(--danger);}
+.b-eco{background:rgba(201,168,76,0.08);border:1.5px solid rgba(201,168,76,0.4);color:var(--gold-dark);}
+.b-sport{background:rgba(0,0,0,0.06);border:1.5px solid rgba(0,0,0,0.3);color:var(--text);}
+.b-suv{background:rgba(139,109,47,0.08);border:1.5px solid rgba(139,109,47,0.4);color:var(--gold-dark);}
+.b-lux{background:rgba(100,80,20,0.08);border:1.5px solid rgba(100,80,20,0.35);color:#6d5c1a;}
+
+/* ROW ACTIONS */
+.row-acts{display:flex;gap:8px;}
+.ibtn{
+  background:transparent;border:1.5px solid var(--border);color:var(--text);
+  width:34px;height:34px;display:flex;align-items:center;justify-content:center;
+  cursor:pointer;transition:all 0.2s;font-size:14px;border-radius:4px;
+}
+.ibtn:hover{border-color:var(--gold);background:rgba(201,168,76,0.08);}
+.ibtn.del:hover{border-color:var(--danger);background:var(--danger-bg);color:var(--danger);}
+
+/* ── MODAL ── */
+.modal-ov{
+  display:none;position:fixed;inset:0;z-index:9999;
+  background:rgba(0,0,0,0.6);backdrop-filter:blur(10px);
+  align-items:center;justify-content:center;padding:20px;overflow-y:auto;
+}
+.modal-ov.active{display:flex;}
+.modal{
+  background:var(--bg-card);border:2px solid var(--border-strong);
+  max-width:700px;width:100%;padding:45px;
+  position:relative;border-radius:6px;
+  max-height:90vh;overflow-y:auto;margin:auto;
+  box-shadow:0 30px 80px rgba(0,0,0,0.2);
+}
+.modal::before{
+  content:"";position:absolute;top:0;left:0;right:0;height:4px;
+  background:linear-gradient(90deg,#000,var(--gold),var(--gold-light),var(--gold),#000);
+  border-radius:6px 6px 0 0;
+}
+.modal-x{
+  position:absolute;top:20px;right:20px;background:none;border:none;
+  color:var(--text-muted);font-size:32px;cursor:pointer;transition:all 0.3s;line-height:1;
+}
+.modal-x:hover{color:var(--gold);transform:rotate(90deg);}
+.modal h2{
+  font-family:"Orbitron",sans-serif;font-size:22px;font-weight:700;
+  margin-bottom:28px;letter-spacing:2px;color:var(--text);
+}
+
+/* ── IMAGE UPLOAD ── */
+.upzone{
+  border:2px dashed var(--border);padding:28px;text-align:center;
+  cursor:pointer;transition:all 0.3s;border-radius:4px;
+  background:var(--input-bg);
+}
+.upzone:hover,.upzone.drag{border-color:var(--gold);background:rgba(201,168,76,0.04);}
+.up-icon{font-size:40px;margin-bottom:8px;}
+.up-hint{font-size:13px;color:var(--text-muted);line-height:1.8;}
+.prog-wrap{display:none;margin-top:14px;}
+.prog-bg{background:rgba(201,168,76,0.15);border:1px solid var(--border);height:6px;border-radius:3px;overflow:hidden;}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--text),var(--gold));width:0%;transition:width 0.15s;}
+.prog-lbl{font-size:10px;color:var(--text-muted);margin-top:6px;letter-spacing:1.5px;font-family:"Orbitron",sans-serif;}
+.prev-wrap{display:none;margin-top:14px;position:relative;}
+.prev-img{max-width:100%;max-height:200px;border:1.5px solid var(--border);display:block;border-radius:4px;}
+.prev-info{font-size:11px;color:var(--success);margin-top:6px;letter-spacing:1px;}
+.prev-rm{
+  position:absolute;top:8px;right:8px;background:var(--danger);
+  border:none;color:#fff;width:28px;height:28px;cursor:pointer;
+  font-size:18px;display:flex;align-items:center;justify-content:center;
+  border-radius:50%;line-height:1;
+}
+
+/* ── DIVIDER ── */
+.gold-divider{
+  height:1px;
+  background:linear-gradient(90deg,transparent,var(--gold),transparent);
+  margin:8px 0;
+}
+
+/* ── RESPONSIVE ── */
+@media(max-width:768px){
+  .admin-header{flex-direction:column;gap:12px;padding:16px 20px;}
+  .admin-content{padding:20px;}
+  .form-row{grid-template-columns:1fr;}
+  .modal{padding:28px 20px;}
+  .stats-row{gap:12px;}
+  .hdr-actions{width:100%;justify-content:center;}
+}
+
+/* ── BIN ID BANNER ── */
+.bin-banner{
+  background:linear-gradient(90deg,rgba(201,168,76,0.12),rgba(201,168,76,0.06));
+  border-bottom:1.5px solid var(--gold);
+  padding:10px 50px;
+  display:none;align-items:center;gap:14px;
+  font-size:12px;color:var(--gold-dark);letter-spacing:0.5px;
+  position:sticky;top:0;z-index:99;
+}
+.bin-banner.show{display:flex;}
+.bin-banner strong{font-family:"Orbitron",sans-serif;font-size:10px;letter-spacing:2px;color:var(--gold-dark);}
+.bin-id-val{
+  font-family:monospace;font-size:13px;background:rgba(201,168,76,0.1);
+  border:1px solid var(--border);padding:4px 12px;border-radius:3px;
+  color:var(--text);letter-spacing:1px;
+}
+.btn-copy{
+  background:var(--gold);border:none;color:#fff;
+  padding:6px 16px;font-family:"Orbitron",sans-serif;font-size:9px;
+  font-weight:700;letter-spacing:2px;cursor:pointer;border-radius:3px;
+  transition:all 0.2s;
+}
+.btn-copy:hover{background:var(--gold-dark);}
+.btn-copy.copied{background:var(--success);}
+.bin-hint{font-size:11px;color:var(--text-muted);}
+@media(max-width:768px){.bin-banner{padding:10px 16px;flex-wrap:wrap;gap:8px;}}
+</style>
+</head>
+<body>
+
+<div class="ld-ov" id="ldOv"><div class="spinner"></div><div class="ld-txt" id="ldTxt">CONNECTING...</div></div>
+<div class="toast" id="toast"></div>
+
+<!-- LOGIN -->
+<div id="loginScreen">
+  <div class="login-box">
+    <div class="login-logo">
+      <span class="ll-black">GRANOLL</span><span class="ll-gold">ERS</span>
+    </div>
+    <div class="login-sub">Admin Panel · Fleet Management</div>
+    <div class="gold-divider" style="margin-bottom:28px;"></div>
+    <div class="err-msg" id="loginErr">⚠ Invalid credentials</div>
+    <form class="login-form" onsubmit="doLogin(event)">
+      <div class="fg"><label>Username</label><input type="text" id="lu" required autocomplete="username"></div>
+      <div class="fg"><label>Password</label><input type="password" id="lp" required autocomplete="current-password"></div>
+      <button type="submit" class="btn-p" style="margin-top:8px;">ACCESS PANEL</button>
+    </form>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard">
+  <div class="admin-header">
+    <div class="admin-logo">
+      <span class="al-black">GRANOLL</span><span class="al-gold">ERS</span>
+      <small>ADMIN</small>
+    </div>
+    <div class="hdr-actions">
+      <div class="sync-pill"><div class="sdot" id="sdot"></div><span id="slbl">Ready</span></div>
+      <button class="btn-g" onclick="openAdd()">+ ADD CAR</button>
+      <button class="btn-s" onclick="forceSave()">↑ SAVE ALL</button>
+      <button class="btn-d" onclick="doLogout()">LOGOUT</button>
+    </div>
+  </div>
+
+
+  <!-- BIN ID BANNER -->
+  <div class="bin-banner" id="binBanner">
+    <strong>YOUR BIN ID:</strong>
+    <span class="bin-id-val" id="binIdVal">—</span>
+    <button class="btn-copy" id="copyBtn" onclick="copyBinId()">COPY</button>
+    <span class="bin-hint">→ Paste this into <code style="background:rgba(201,168,76,0.1);padding:2px 6px;border-radius:2px;">HARDCODED_BIN_ID</code> in your website file</span>
+  </div>
+  <div class="admin-content">
+    <h1 class="page-ttl"><span class="pt-black">CAR </span><span class="pt-gold">MANAGEMENT</span></h1>
+    <p class="page-sub">Car data saved to JSONBin · Images stored on Cloudinary CDN · Changes appear instantly on your website.</p>
+
+    <div class="notice" id="presetNotice">
+      <strong>⚡ ONE-TIME CLOUDINARY SETUP NEEDED (image uploads)</strong>
+      <ol>
+        <li>Go to <b>cloudinary.com</b> → Settings ⚙ → <b>Upload</b> tab</li>
+        <li>Scroll to <b>"Upload presets"</b> → <b>"Add upload preset"</b></li>
+        <li>Preset name: <code>granollers_cars</code> &nbsp;·&nbsp; Signing mode: <code>Unsigned</code></li>
+        <li>Click <b>Save</b> — then try uploading a photo again</li>
+      </ol>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-c"><div class="stat-n" id="stTotal">—</div><div class="stat-l">Total Cars</div></div>
+      <div class="stat-c"><div class="stat-n" id="stAvail">—</div><div class="stat-l">Available</div></div>
+      <div class="stat-c"><div class="stat-n" id="stUnavail">—</div><div class="stat-l">Unavailable</div></div>
+      <div class="stat-c"><div class="stat-n" id="stCats">—</div><div class="stat-l">Categories</div></div>
+    </div>
+
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>IMAGE</th>
+            <th>CAR</th>
+            <th>CATEGORY</th>
+            <th>PRICE / DAY</th>
+            <th>STATUS</th>
+            <th>SPECS</th>
+            <th>ACTIONS</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- CAR MODAL -->
+<div class="modal-ov" id="carModal">
+  <div class="modal">
+    <button class="modal-x" onclick="closeModal()">&times;</button>
+    <h2 id="modalTtl">ADD NEW CAR</h2>
+    <form onsubmit="saveCar(event)" style="display:flex;flex-direction:column;gap:18px;">
+      <input type="hidden" id="cid">
+      <div class="form-row">
+        <div class="fg"><label>CAR NAME</label><input type="text" id="cname" required placeholder="e.g. Renault Clio 5"></div>
+        <div class="fg"><label>YEAR</label><input type="text" id="cyear" required value="2025"></div>
+      </div>
+      <div class="form-row">
+        <div class="fg"><label>CATEGORY</label>
+          <select id="ccat" required>
+            <option value="Economy">Economy</option>
+            <option value="Sport">Sport</option>
+            <option value="SUV">SUV</option>
+            <option value="Luxury">Luxury</option>
+          </select>
+        </div>
+        <div class="fg"><label>PRICE / DAY (MAD)</label><input type="number" id="cprice" required min="0" step="10" placeholder="300"></div>
+      </div>
+      <div class="form-row">
+        <div class="fg"><label>SEATS</label><input type="number" id="cseats" required min="2" max="9" value="5"></div>
+        <div class="fg"><label>TRANSMISSION</label>
+          <select id="ctrans" required>
+            <option value="Manual">Manual</option>
+            <option value="Auto">Auto</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="fg"><label>FUEL</label>
+          <select id="cfuel" required>
+            <option value="Essence">Essence (Petrol)</option>
+            <option value="Diesel">Diesel</option>
+            <option value="Hybride">Hybride</option>
+            <option value="Électrique">Électrique</option>
+          </select>
+        </div>
+        <div class="fg"><label>AVAILABILITY</label>
+          <select id="cavail" required>
+            <option value="true">✅ Available</option>
+            <option value="false">❌ Unavailable</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- IMAGE UPLOAD -->
+      <div class="fg">
+        <label>CAR IMAGE</label>
+        <div class="upzone" id="upzone"
+          onclick="document.getElementById('fInput').click()"
+          ondragover="dzOver(event)" ondragleave="dzLeave()" ondrop="dzDrop(event)">
+          <input type="file" id="fInput" accept="image/*" style="display:none" onchange="handleFile(event.target.files[0])">
+          <div id="upIcon" class="up-icon">📸</div>
+          <div id="upHint" class="up-hint">Click or drag & drop a photo<br><small style="opacity:0.6;">Any size · Full quality · Stored on Cloudinary CDN</small></div>
+          <div class="prog-wrap" id="progWrap">
+            <div class="prog-bg"><div class="prog-fill" id="progFill"></div></div>
+            <div class="prog-lbl" id="progLbl">UPLOADING...</div>
+          </div>
+        </div>
+        <div class="prev-wrap" id="prevWrap">
+          <img id="prevImg" class="prev-img" src="" alt="">
+          <div id="prevInfo" class="prev-info"></div>
+          <button type="button" class="prev-rm" onclick="rmImg()">×</button>
+        </div>
+        <input type="hidden" id="cimg">
+      </div>
+
+      <button type="submit" class="btn-p" id="saveBtn" style="margin-top:6px;">SAVE CAR</button>
+    </form>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════════════
+// ✅ SETUP COMPLETE — HOW IT WORKS:
+// 1. Open this admin file → login → click ↑ SAVE ALL
+// 2. Copy the Bin ID from the gold banner that appears
+// 3. Open granollers_website.html → find HARDCODED_BIN_ID → paste it
+// 4. Upload both files to GitHub — done forever!
+// ════════════════════════════════════════════════════════
+// CONFIG
+// ════════════════════════════════════════════════════════
+const CLD    = 'dvdb3nvtx';
+const PRESET = 'granollers_cars';
+
+const JB_KEY  = '$2a$10$VkJK.b/biSpYYgGgkuha9ebWmoqq7gR3bL2lANpTmtwwzqMAGAf3W';
+const JB_BASE = 'https://api.jsonbin.io/v3/b';
+const BIN_KEY = 'gc_bin_id';
+
+// ══════════════════════════════════════════════════════════════
+// 🔐 LOGIN CREDENTIALS — change these if needed
+// ══════════════════════════════════════════════════════════════
+const CREDS = { u:'GRANOLLERS CAR RENTAL', p:'carsmodfications26@' };
+
+let CARS  = [];
+let editId = null;
+
+// ════════════════════════════════════════════════════════
+// BOOT
+// ════════════════════════════════════════════════════════
+window.addEventListener('DOMContentLoaded', () => {
+  hideLd();
+  if (localStorage.getItem('gcAuth') === '1') { showDash(); loadCars(); }
+});
+
+// ════════════════════════════════════════════════════════
+// AUTH
+// ════════════════════════════════════════════════════════
+function doLogin(e) {
+  e.preventDefault();
+  if (document.getElementById('lu').value === CREDS.u && document.getElementById('lp').value === CREDS.p) {
+    localStorage.setItem('gcAuth','1'); showDash(); loadCars();
+  } else {
+    const el = document.getElementById('loginErr');
+    el.classList.add('show'); setTimeout(() => el.classList.remove('show'), 3000);
+  }
+}
+function doLogout() { if(confirm('Logout?')){ localStorage.removeItem('gcAuth'); location.reload(); } }
+function showDash() {
+  document.getElementById('loginScreen').style.display='none';
+  document.getElementById('dashboard').classList.add('active');
+  const existingId = localStorage.getItem(BIN_KEY);
+  if (existingId) showBinBanner(existingId);
+}
+
+// ════════════════════════════════════════════════════════
+// LOAD DATA
+// ════════════════════════════════════════════════════════
+async function loadCars() {
+  showLd('LOADING FLEET...');
+  sync('syncing','Loading...');
+  const binId = localStorage.getItem(BIN_KEY);
+  try {
+    if (!binId) throw new Error('no bin');
+    const r = await fetch(`${JB_BASE}/${binId}/latest`, {
+      headers:{ 'X-Master-Key': JB_KEY, 'X-Bin-Meta': 'false' }
+    });
+    if (!r.ok) throw new Error('fetch failed');
+    const d = await r.json();
+    CARS = d.cars || [];
+    sync('synced','Loaded ✓');
+    toast('Fleet loaded ✓','success');
+  } catch {
+    CARS = defaultCars();
+    sync('error', binId ? 'Load failed — showing defaults' : 'No bin yet — save to create one');
+    toast('Starting fresh — add cars and save','info');
+  }
+  hideLd(); renderTbl(); updateStats();
+}
+
+// ════════════════════════════════════════════════════════
+// SAVE DATA
+// ════════════════════════════════════════════════════════
+async function saveToCloud() {
+  sync('syncing','Saving...');
+  const binId = localStorage.getItem(BIN_KEY);
+  const body  = JSON.stringify({ cars: CARS });
+  const headers = { 'Content-Type':'application/json', 'X-Master-Key': JB_KEY };
+  try {
+    let r;
+    if (binId) {
+      r = await fetch(`${JB_BASE}/${binId}`, { method:'PUT', headers, body });
+    } else {
+      r = await fetch(JB_BASE, {
+        method:'POST',
+        headers:{ ...headers, 'X-Bin-Name':'granollers-cars', 'X-Bin-Private':'false' },
+        body
+      });
+      if (r.ok) {
+        const d = await r.json();
+        const newId = d.metadata?.id;
+        if (newId) {
+          localStorage.setItem(BIN_KEY, newId);
+          showBinBanner(newId);
+          alert('✅ Bin created!\n\nYour Bin ID is:\n' + newId + '\n\nCopy this and paste it into HARDCODED_BIN_ID in your website file so it works on all devices!');
+        }
+      }
+    }
+    if (!r.ok) {
+      const e = await r.json();
+      throw new Error(e.message || 'Save failed');
+    }
+    sync('synced','Saved ✓');
+    toast('Saved ✓','success');
+  } catch(e) {
+    console.error('Save error:', e);
+    sync('error','Save failed!');
+    toast(`Save error: ${e.message}`,'error');
+  }
+}
+
+async function forceSave() { await saveToCloud(); }
+
+// ════════════════════════════════════════════════════════
+// UPLOAD IMAGE
+// ════════════════════════════════════════════════════════
+async function uploadImg(file) {
+  const fd = new FormData();
+  fd.append('file', file);
+  fd.append('upload_preset', PRESET);
+  fd.append('folder','granollers-cars');
+  const r = await fetch(`https://api.cloudinary.com/v1_1/${CLD}/image/upload`, {method:'POST',body:fd});
+  if (!r.ok) {
+    const e = await r.json();
+    const msg = e.error?.message || 'Upload failed';
+    if (msg.toLowerCase().includes('preset')||msg.toLowerCase().includes('unknown')||msg.toLowerCase().includes('invalid'))
+      document.getElementById('presetNotice').classList.add('show');
+    throw new Error(msg);
+  }
+  return await r.json();
+}
+
+function dzOver(e) { e.preventDefault(); document.getElementById('upzone').classList.add('drag'); }
+function dzLeave() { document.getElementById('upzone').classList.remove('drag'); }
+function dzDrop(e) { e.preventDefault(); dzLeave(); const f=e.dataTransfer.files[0]; if(f&&f.type.startsWith('image/')) handleFile(f); }
+
+async function handleFile(file) {
+  if (!file) return;
+  document.getElementById('upIcon').style.display='none';
+  document.getElementById('upHint').style.display='none';
+  document.getElementById('progWrap').style.display='block';
+  document.getElementById('prevWrap').style.display='none';
+  document.getElementById('saveBtn').disabled=true;
+  document.getElementById('saveBtn').textContent='UPLOADING IMAGE...';
+  let pct=0;
+  const tick=setInterval(()=>{ pct=Math.min(pct+3,88); document.getElementById('progFill').style.width=pct+'%'; },100);
+  try {
+    document.getElementById('progLbl').textContent='UPLOADING TO CLOUDINARY...';
+    const d = await uploadImg(file);
+    clearInterval(tick);
+    document.getElementById('progFill').style.width='100%';
+    document.getElementById('progLbl').textContent='UPLOAD COMPLETE ✓';
+    setTimeout(()=>{
+      document.getElementById('progWrap').style.display='none';
+      document.getElementById('upIcon').style.display='block';
+      document.getElementById('upHint').style.display='block';
+      document.getElementById('prevImg').src=d.secure_url;
+      document.getElementById('prevInfo').textContent=`✓ ${d.width}×${d.height}px · ${Math.round(d.bytes/1024)} KB · Full quality`;
+      document.getElementById('prevWrap').style.display='block';
+      document.getElementById('cimg').value=d.secure_url;
+      document.getElementById('saveBtn').disabled=false;
+      document.getElementById('saveBtn').textContent='SAVE CAR';
+      toast('Image uploaded at full quality ✓','success');
+    },400);
+  } catch(e) {
+    clearInterval(tick);
+    document.getElementById('progWrap').style.display='none';
+    document.getElementById('upIcon').style.display='block';
+    document.getElementById('upHint').style.display='block';
+    document.getElementById('saveBtn').disabled=false;
+    document.getElementById('saveBtn').textContent='SAVE CAR';
+    toast(`Upload failed: ${e.message}`,'error');
+  }
+}
+
+function rmImg() {
+  document.getElementById('cimg').value='';
+  document.getElementById('prevWrap').style.display='none';
+  const fi=document.getElementById('fInput'); if(fi) fi.value='';
+}
+
+// ════════════════════════════════════════════════════════
+// TABLE
+// ════════════════════════════════════════════════════════
+function renderTbl() {
+  const tb=document.getElementById('tbody');
+  if(!CARS.length){
+    tb.innerHTML=`<tr><td colspan="7" style="text-align:center;padding:60px;color:var(--text-muted);font-family:'Orbitron',sans-serif;letter-spacing:3px;font-size:12px;">NO CARS YET — CLICK "+ ADD CAR"</td></tr>`;
+    return;
+  }
+  tb.innerHTML=CARS.map(c=>{
+    const cc={Economy:'eco',Sport:'sport',SUV:'suv',Luxury:'lux'}[c.category]||'eco';
+    const img=c.image?`<img class="cthumb" src="${c.image}" alt="${c.name}" onerror="this.style.display='none'">`:`<div class="cthumb-ph">🚗</div>`;
+    return `<tr>
+      <td>${img}</td>
+      <td class="cn"><strong>${c.name}</strong><small>${c.year}</small></td>
+      <td><span class="badge b-${cc}">${c.category}</span></td>
+      <td><strong style="font-family:'Orbitron',sans-serif;font-size:13px;">${c.price} MAD</strong></td>
+      <td><span class="badge ${c.available?'b-avail':'b-unavail'}">${c.available?'Available':'Unavailable'}</span></td>
+      <td style="color:var(--text-muted);font-size:13px;">${c.seats} seats · ${c.transmission} · ${c.fuel}</td>
+      <td><div class="row-acts">
+        <button class="ibtn" onclick="editCar(${c.id})" title="Edit">✏️</button>
+        <button class="ibtn" onclick="toggleCar(${c.id})" title="Toggle">${c.available?'🔴':'🟢'}</button>
+        <button class="ibtn del" onclick="delCar(${c.id})" title="Delete">🗑️</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+function updateStats() {
+  const av=CARS.filter(c=>c.available).length;
+  document.getElementById('stTotal').textContent=CARS.length;
+  document.getElementById('stAvail').textContent=av;
+  document.getElementById('stUnavail').textContent=CARS.length-av;
+  document.getElementById('stCats').textContent=[...new Set(CARS.map(c=>c.category))].length;
+}
+
+// ════════════════════════════════════════════════════════
+// MODAL
+// ════════════════════════════════════════════════════════
+function resetForm() {
+  ['cid','cname','cprice','cimg'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('cyear').value='2025';
+  document.getElementById('ccat').value='Economy';
+  document.getElementById('cseats').value='5';
+  document.getElementById('ctrans').value='Manual';
+  document.getElementById('cfuel').value='Essence';
+  document.getElementById('cavail').value='true';
+  document.getElementById('prevWrap').style.display='none';
+  const fi=document.getElementById('fInput'); if(fi) fi.value='';
+  document.getElementById('saveBtn').disabled=false;
+  document.getElementById('saveBtn').textContent='SAVE CAR';
+}
+
+function openAdd() {
+  editId=null; resetForm();
+  document.getElementById('modalTtl').textContent='ADD NEW CAR';
+  document.getElementById('carModal').classList.add('active');
+}
+
+function editCar(id) {
+  const c=CARS.find(x=>x.id===id); if(!c) return;
+  editId=id; resetForm();
+  document.getElementById('modalTtl').textContent='EDIT CAR';
+  document.getElementById('cid').value=c.id;
+  document.getElementById('cname').value=c.name;
+  document.getElementById('cyear').value=c.year;
+  document.getElementById('ccat').value=c.category;
+  document.getElementById('cprice').value=c.price;
+  document.getElementById('cseats').value=c.seats;
+  document.getElementById('ctrans').value=c.transmission;
+  document.getElementById('cfuel').value=c.fuel;
+  document.getElementById('cavail').value=String(c.available);
+  document.getElementById('cimg').value=c.image||'';
+  if(c.image){ document.getElementById('prevImg').src=c.image; document.getElementById('prevInfo').textContent='✓ Current image'; document.getElementById('prevWrap').style.display='block'; }
+  document.getElementById('carModal').classList.add('active');
+}
+
+function closeModal() { document.getElementById('carModal').classList.remove('active'); editId=null; }
+
+async function saveCar(e) {
+  e.preventDefault();
+  const d={
+    name:document.getElementById('cname').value.trim(),
+    year:document.getElementById('cyear').value.trim(),
+    category:document.getElementById('ccat').value,
+    price:parseInt(document.getElementById('cprice').value),
+    seats:parseInt(document.getElementById('cseats').value),
+    transmission:document.getElementById('ctrans').value,
+    fuel:document.getElementById('cfuel').value,
+    available:document.getElementById('cavail').value==='true',
+    image:document.getElementById('cimg').value||''
+  };
+  if(editId!==null){ const i=CARS.findIndex(c=>c.id===editId); if(i!==-1) CARS[i]={...CARS[i],...d}; }
+  else { const nid=CARS.length?Math.max(...CARS.map(c=>c.id))+1:1; CARS.push({id:nid,...d}); }
+  closeModal(); renderTbl(); updateStats(); await saveToCloud();
+}
+
+async function toggleCar(id) {
+  const c=CARS.find(x=>x.id===id); if(!c) return;
+  c.available=!c.available; renderTbl(); updateStats(); await saveToCloud();
+}
+
+async function delCar(id) {
+  const c=CARS.find(x=>x.id===id);
+  if(!c||!confirm(`Delete "${c.name}"?`)) return;
+  CARS=CARS.filter(x=>x.id!==id); renderTbl(); updateStats(); await saveToCloud();
+}
+
+// ════════════════════════════════════════════════════════
+// UI HELPERS
+// ════════════════════════════════════════════════════════
+function sync(state,label){ document.getElementById('sdot').className='sdot '+state; document.getElementById('slbl').textContent=label; }
+function showLd(t){ document.getElementById('ldTxt').textContent=t||'LOADING...'; document.getElementById('ldOv').classList.remove('hidden'); }
+function hideLd(){ document.getElementById('ldOv').classList.add('hidden'); }
+let tTimer;
+function toast(msg,type='info'){ const el=document.getElementById('toast'); el.textContent=msg; el.className=`toast ${type} show`; clearTimeout(tTimer); tTimer=setTimeout(()=>{el.className=`toast ${type}`;},3500); }
+document.addEventListener('click',e=>{ if(e.target.id==='carModal') closeModal(); });
+
+// ════════════════════════════════════════════════════════
+// DEFAULT DATA
+// ════════════════════════════════════════════════════════
+function defaultCars(){return[
+  {id:1,name:"Citroën C4X",year:"2025",category:"SUV",price:450,available:true,seats:5,transmission:"Auto",fuel:"Essence",image:""},
+  {id:2,name:"Cupra Formentor",year:"2025",category:"Sport",price:650,available:true,seats:5,transmission:"Auto",fuel:"Essence",image:""},
+  {id:3,name:"Dacia Sandero Streetway",year:"2025",category:"Economy",price:220,available:true,seats:5,transmission:"Manual",fuel:"Essence",image:""},
+  {id:4,name:"Dacia Sandero Streetway",year:"2025",category:"Economy",price:220,available:true,seats:5,transmission:"Manual",fuel:"Essence",image:""},
+  {id:5,name:"Dacia Stepway",year:"2025",category:"SUV",price:280,available:true,seats:5,transmission:"Manual",fuel:"Essence",image:""},
+  {id:6,name:"Golf 8 R Line",year:"2025",category:"Sport",price:600,available:true,seats:5,transmission:"Auto",fuel:"Essence",image:""},
+  {id:7,name:"Hyundai i20",year:"2025",category:"Economy",price:320,available:true,seats:5,transmission:"Auto",fuel:"Essence",image:""},
+  {id:8,name:"Opel Astra",year:"2025",category:"Sport",price:400,available:true,seats:5,transmission:"Auto",fuel:"Essence",image:""},
+  {id:9,name:"Opel Corsa",year:"2025",category:"Economy",price:260,available:true,seats:5,transmission:"Manual",fuel:"Essence",image:""},
+  {id:10,name:"Opel Corsa",year:"2025",category:"Economy",price:260,available:true,seats:5,transmission:"Manual",fuel:"Essence",image:""},
+  {id:11,name:"Opel Mokka",year:"2025",category:"SUV",price:480,available:true,seats:5,transmission:"Auto",fuel:"Essence",image:""},
+  {id:12,name:"Peugeot 208 GT",year:"2025",category:"Sport",price:380,available:true,seats:5,transmission:"Auto",fuel:"Essence",image:""},
+  {id:13,name:"Renault Clio 5",year:"2025",category:"Economy",price:240,available:true,seats:5,transmission:"Manual",fuel:"Essence",image:""},
+  {id:14,name:"Renault Clio 5",year:"2025",category:"Economy",price:240,available:true,seats:5,transmission:"Manual",fuel:"Essence",image:""},
+  {id:15,name:"Renault Clio 5",year:"2025",category:"Economy",price:240,available:true,seats:5,transmission:"Manual",fuel:"Essence",image:""},
+  {id:16,name:"Renault Clio 5 Alpine",year:"2025",category:"Sport",price:420,available:true,seats:5,transmission:"Auto",fuel:"Essence",image:""},
+  {id:17,name:"Seat Ibiza FR",year:"2025",category:"Sport",price:360,available:true,seats:5,transmission:"Manual",fuel:"Essence",image:""},
+  {id:18,name:"Seat Ibiza FR",year:"2025",category:"Sport",price:360,available:true,seats:5,transmission:"Manual",fuel:"Essence",image:""},
+  {id:19,name:"T-Roc R Line",year:"2025",category:"SUV",price:700,available:true,seats:5,transmission:"Auto",fuel:"Essence",image:""}
+];}
+
+// ════════════════════════════════════════════════════════
+// 📋 BIN ID BANNER
+// ════════════════════════════════════════════════════════
+function showBinBanner(id) {
+  document.getElementById('binIdVal').textContent = id;
+  document.getElementById('binBanner').classList.add('show');
+}
+function copyBinId() {
+  const id = document.getElementById('binIdVal').textContent;
+  navigator.clipboard.writeText(id).then(() => {
+    const btn = document.getElementById('copyBtn');
+    btn.textContent = 'COPIED ✓';
+    btn.classList.add('copied');
+    toast('Bin ID copied! Paste it into your website file.','success');
+    setTimeout(() => { btn.textContent = 'COPY'; btn.classList.remove('copied'); }, 2500);
+  });
+}
+</script>
+</body>
+</html>
